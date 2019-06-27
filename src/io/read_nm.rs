@@ -1,5 +1,7 @@
 use std::fs::read;
 use encoding_rs::KOI8_R;
+use std::mem::transmute;
+use std::convert::TryInto;
 
 #[derive(Debug)]
 pub struct RaceName {
@@ -13,6 +15,12 @@ pub struct PlanetName {
     text: String
 }
 
+#[derive(Debug)]
+pub struct Coords {
+    x: i16,
+    y: i16
+}
+
 const NUMBER_OF_PLANETS: usize = 500;
 
 fn read_koi8r_file(path: &str) -> String {
@@ -20,6 +28,10 @@ fn read_koi8r_file(path: &str) -> String {
     let (cow_str, _, _) = KOI8_R.decode(content.as_ref());
 
     return cow_str.as_ref().to_owned();
+}
+
+fn read_int16(slice: [u8; 2]) -> i16  {
+    return i16::from_le_bytes(slice);
 }
 
 pub fn read_race_nm(path: &str) -> Vec<RaceName> {
@@ -63,4 +75,21 @@ pub fn read_planet_nm(path: &str) -> Vec<PlanetName> {
     }).collect();
 
     planet_names
+}
+
+pub fn read_xyplan_dat(path: &str) -> Vec<Coords> {
+    let content = read(path).unwrap();
+    const RECORD_SIZE: usize = 6;
+
+    let coords = (0..NUMBER_OF_PLANETS).map(|idx| {
+        let record = &content[idx*RECORD_SIZE..(idx+1)*RECORD_SIZE];
+        let x = read_int16(record[0..2].try_into().unwrap());
+        let y = read_int16(record[2..4].try_into().unwrap());
+        Coords{
+            x: x,
+            y: y
+        }
+    }).collect();
+
+    coords
 }
