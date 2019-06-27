@@ -21,7 +21,23 @@ pub struct Coords {
     y: i16
 }
 
+#[derive(Debug)]
+pub struct Beamspec {
+    name: String,
+    mc: i16,
+    tri: i16,
+    mol: i16,
+    dur: i16,
+    mass: i16,
+    tech: i16,
+    kill: i16,
+    damage: i16
+}
+
+const NUMBER_OR_RACES: usize = 11;
 const NUMBER_OF_PLANETS: usize = 500;
+const NUMBER_OF_BEAMS: usize = 10;
+
 
 fn read_koi8r_file(path: &str) -> String {
     let content = read(path).unwrap();
@@ -30,8 +46,12 @@ fn read_koi8r_file(path: &str) -> String {
     return cow_str.as_ref().to_owned();
 }
 
-fn read_int16(slice: [u8; 2]) -> i16  {
+fn read_int16(slice: [u8; 2]) -> i16 {
     return i16::from_le_bytes(slice);
+}
+fn read_koi8r_str(slice: &[u8]) -> String {
+    let (cow_str, _, _) = KOI8_R.decode(slice);
+    cow_str.as_ref().to_owned()
 }
 
 pub fn read_race_nm(path: &str) -> Vec<RaceName> {
@@ -41,11 +61,11 @@ pub fn read_race_nm(path: &str) -> Vec<RaceName> {
     const SHORT_NAME_LENGTH: usize = 20;
     const ADJECTIVE_LENGTH: usize = 12;
 
-    let long_names = &full_str[0..LONG_NAME_LENGTH*11];
-    let short_names = &full_str[LONG_NAME_LENGTH*11..LONG_NAME_LENGTH*11 + SHORT_NAME_LENGTH*11];
-    let adjectives = &full_str[LONG_NAME_LENGTH*11 + SHORT_NAME_LENGTH*11..];
+    let long_names = &full_str[0..LONG_NAME_LENGTH*NUMBER_OR_RACES];
+    let short_names = &full_str[LONG_NAME_LENGTH*NUMBER_OR_RACES..LONG_NAME_LENGTH*NUMBER_OR_RACES + SHORT_NAME_LENGTH*NUMBER_OR_RACES];
+    let adjectives = &full_str[LONG_NAME_LENGTH*NUMBER_OR_RACES + SHORT_NAME_LENGTH*NUMBER_OR_RACES..];
 
-    let races_names: Vec<RaceName> = (0..11).map(|idx| {
+    let races_names: Vec<RaceName> = (0..NUMBER_OR_RACES).map(|idx| {
         let long_name_index = idx*LONG_NAME_LENGTH;
         let short_name_index = idx*SHORT_NAME_LENGTH;
         let adjective_index = idx*ADJECTIVE_LENGTH;
@@ -92,4 +112,26 @@ pub fn read_xyplan_dat(path: &str) -> Vec<Coords> {
     }).collect();
 
     coords
+}
+
+pub fn read_beamspec_dat(path: &str) -> Vec<Beamspec> {
+    let content = read(path).unwrap();
+    const RECORD_SIZE: usize = 36;
+
+    let specs = (0..NUMBER_OF_BEAMS).map(|idx| {
+        let record = &content[idx*RECORD_SIZE..(idx+1)*RECORD_SIZE];
+        Beamspec {
+            name: read_koi8r_str(&record[0..20]).trim().to_owned(),
+            mc: read_int16(record[20..22].try_into().unwrap()),
+            tri: read_int16(record[22..24].try_into().unwrap()),
+            dur: read_int16(record[24..26].try_into().unwrap()),
+            mol: read_int16(record[26..28].try_into().unwrap()),
+            mass: read_int16(record[28..30].try_into().unwrap()),
+            tech: read_int16(record[30..32].try_into().unwrap()),
+            kill: read_int16(record[32..34].try_into().unwrap()),
+            damage: read_int16(record[34..36].try_into().unwrap()),
+        }
+    }).collect();
+
+    specs
 }
