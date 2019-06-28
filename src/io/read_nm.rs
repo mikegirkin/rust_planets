@@ -1,6 +1,7 @@
 use std::fs::read;
 use encoding_rs::KOI8_R;
 use std::mem::transmute;
+use std::mem;
 use std::convert::TryInto;
 
 #[derive(Debug)]
@@ -34,10 +35,22 @@ pub struct Beamspec {
     damage: i16
 }
 
+#[derive(Debug)]
+pub struct Engspec {
+    name: String,
+    mc: i16,
+    tri: i16,
+    dur: i16,
+    mol: i16,
+    tech: i16,
+    fuel_consumption: Vec<i32>
+}
+
 const NUMBER_OR_RACES: usize = 11;
 const NUMBER_OF_PLANETS: usize = 500;
 const NUMBER_OF_BEAMS: usize = 10;
-
+const NUMBER_OF_ENGINES: usize = 9;
+const NUMBER_OF_WARPS: usize = 9;
 
 fn read_koi8r_file(path: &str) -> String {
     let content = read(path).unwrap();
@@ -49,9 +62,14 @@ fn read_koi8r_file(path: &str) -> String {
 fn read_int16(slice: [u8; 2]) -> i16 {
     return i16::from_le_bytes(slice);
 }
+
 fn read_koi8r_str(slice: &[u8]) -> String {
     let (cow_str, _, _) = KOI8_R.decode(slice);
-    cow_str.as_ref().to_owned()
+    cow_str.as_ref().trim_matches(|c: char| c.is_whitespace() || c == '\u{0}').to_owned()
+}
+
+fn read_int32(slice: [u8; 4]) -> i32 {
+    return i32::from_le_bytes(slice);
 }
 
 pub fn read_race_nm(path: &str) -> Vec<RaceName> {
@@ -88,7 +106,7 @@ pub fn read_planet_nm(path: &str) -> Vec<PlanetName> {
     const PLANET_NAME_LENGTH: usize = 20;
 
     let planet_names = (0..NUMBER_OF_PLANETS).map(|idx| {
-       let name = &full_str[idx*PLANET_NAME_LENGTH..(idx+1)*PLANET_NAME_LENGTH];
+       let name = [idx*PLANET_NAME_LENGTH..(idx+1)*PLANET_NAME_LENGTH];
         PlanetName {
             text: name.trim().to_owned()
         }
@@ -121,7 +139,7 @@ pub fn read_beamspec_dat(path: &str) -> Vec<Beamspec> {
     let specs = (0..NUMBER_OF_BEAMS).map(|idx| {
         let record = &content[idx*RECORD_SIZE..(idx+1)*RECORD_SIZE];
         Beamspec {
-            name: read_koi8r_str(&record[0..20]).trim().to_owned(),
+            name: read_koi8r_str(&record[0..20]),
             mc: read_int16(record[20..22].try_into().unwrap()),
             tri: read_int16(record[22..24].try_into().unwrap()),
             dur: read_int16(record[24..26].try_into().unwrap()),
@@ -130,6 +148,29 @@ pub fn read_beamspec_dat(path: &str) -> Vec<Beamspec> {
             tech: read_int16(record[30..32].try_into().unwrap()),
             kill: read_int16(record[32..34].try_into().unwrap()),
             damage: read_int16(record[34..36].try_into().unwrap()),
+        }
+    }).collect();
+
+    specs
+}
+
+pub fn read_endspec_dat(path: &str) -> Vec<Engspec> {
+    let content = read(path).unwrap();
+    const RECORD_SIZE: usize = 66;
+
+    let specs = (0..NUMBER_OF_ENGINES).map(|idx| {
+        let record = &content[idx*RECORD_SIZE..(idx+1)*RECORD_SIZE];
+        Engspec {
+            name: read_koi8r_str(&record[0..20]),
+            mc: read_int16(record[20..22].try_into().unwrap()),
+            tri: read_int16(record[22..24].try_into().unwrap()),
+            dur: read_int16(record[24..26].try_into().unwrap()),
+            mol: read_int16(record[26..28].try_into().unwrap()),
+            tech: read_int16(record[28..30].try_into().unwrap()),
+            fuel_consumption: (0..NUMBER_OF_WARPS).map(|x| {
+                let start_index = 30 + x*mem::size_of::<i32>();
+                read_int32(record[start_index..start_index + mem::size_of::<i32>()].try_into().unwrap())
+            }).collect()
         }
     }).collect();
 
