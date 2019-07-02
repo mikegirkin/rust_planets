@@ -1,1 +1,1 @@
-pub mod read_nm;
+pub mod read_static;

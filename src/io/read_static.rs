@@ -101,14 +101,14 @@ pub fn read_race_nm(path: &str) -> Vec<RaceName> {
 }
 
 pub fn read_planet_nm(path: &str) -> Vec<PlanetName> {
-    let full_str = read_koi8r_file(path);
+    let full_str = read(path).unwrap();
 
     const PLANET_NAME_LENGTH: usize = 20;
 
     let planet_names = (0..NUMBER_OF_PLANETS).map(|idx| {
-       let name = [idx*PLANET_NAME_LENGTH..(idx+1)*PLANET_NAME_LENGTH];
+       let name = read_koi8r_str(&full_str[idx*PLANET_NAME_LENGTH..(idx+1)*PLANET_NAME_LENGTH]);
         PlanetName {
-            text: name.trim().to_owned()
+            text: name
         }
     }).collect();
 
@@ -176,3 +176,8 @@ pub fn read_endspec_dat(path: &str) -> Vec<Engspec> {
 
     specs
 }
+
+
+#[cfg(test)]
+#[path = "./read_static_test.rs"]
+mod read_static_test;
