@@ -14,11 +14,14 @@ fn main() {
 
     let beam_specs = io::read_static::read_beamspec_dat(&format!("{}{}", test_path, "beamspec.dat"));
 
-    let engine_specs = io::read_static::read_endspec_dat(&format!("{}{}", test_path, "engspec.dat"));
+    let engine_specs = io::read_static::read_engspec_dat(&format!("{}{}", test_path, "engspec.dat"));
+
+    let torp_specs = io::read_static::read_torpspec_dat(&format!("{}{}", test_path, "torpspec.dat"));
 
     println!("race.nm: {:?}", race_names);
     println!("planet.nm: {:?}", planet_names);
     println!("xyplan.dat: {:?}", planet_coords);
     println!("beamspec.dat: {:?}", beam_specs);
     println!("engspec.dat: {:?}", engine_specs);
+    println!("torpspec.dat: {:?}", torp_specs);
 }
