@@ -16,7 +16,7 @@ pub struct PlanetName {
     text: String
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Coords {
     x: i16,
     y: i16
