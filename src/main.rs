@@ -1,4 +1,4 @@
-use crate::io::read_static::read_xyplan_dat;
+use crate::io::read_static::{read_xyplan_dat, Hullspec};
 
 mod io;
 
@@ -20,6 +20,14 @@ fn main() {
 
     let hull_specs = io::read_static::read_hullspec_dat(&format!("{}{}", test_path, "hullspec.dat"));
 
+    let truehull_raw = io::read_static::read_truehull_dat(&format!("{}{}", test_path, "truehull.dat"));
+
+    let hulls_races: Vec<Vec<&Hullspec>> = truehull_raw.iter().map(|assignment| {
+        assignment.available_hulls.iter().map(|hull_idx| {
+            &hull_specs[*hull_idx]
+        }).collect()
+    }).collect();
+
     println!("race.nm: {:?}", race_names);
     println!("planet.nm: {:?}", planet_names);
     println!("xyplan.dat: {:?}", planet_coords);
@@ -27,4 +35,5 @@ fn main() {
     println!("engspec.dat: {:?}", engine_specs);
     println!("torpspec.dat: {:?}", torp_specs);
     println!("hullspec.dat: {:?}", hull_specs);
+    println!("Liz ships: {:?}", hulls_races[1]);
 }

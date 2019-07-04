@@ -79,6 +79,11 @@ pub struct Hullspec {
     mc: i16
 }
 
+#[derive(Debug)]
+pub struct HullAssignment {
+    pub available_hulls: Vec<usize>
+}
+
 const NUMBER_OR_RACES: usize = 11;
 const NUMBER_OF_PLANETS: usize = 500;
 const NUMBER_OF_BEAMS: usize = 10;
@@ -89,6 +94,12 @@ const NUMBER_OF_HULLS: usize = 105;
 
 fn read_int16(slice: [u8; 2]) -> i16 {
     return i16::from_le_bytes(slice);
+}
+
+fn read_usize_word(slice: [u8; 2]) -> usize {
+    return usize::from(
+        u16::from_le_bytes(slice)
+    );
 }
 
 fn read_koi8r_str(slice: &[u8]) -> String {
@@ -254,6 +265,27 @@ pub fn read_hullspec_dat(path: &str) -> Vec<Hullspec> {
     }).collect();
 
     specs
+}
+
+pub fn read_truehull_dat(path: &str) -> Vec<HullAssignment> {
+    let content = read(path).unwrap();
+    const RECORD_SIZE: usize = 40;
+
+    let assignments = (0..NUMBER_OR_RACES).map(|idx| {
+        let record = &content[idx*RECORD_SIZE..(idx+1)*RECORD_SIZE];
+
+        let avalable_hulls = (0..20).map(|x| {
+            read_usize_word(record[x*2..(x+1)*2].try_into().unwrap())
+        }).filter(|number| *number != 0)
+            .map(|number| number - 1)
+            .collect::<Vec<usize>>();
+
+        HullAssignment {
+            available_hulls: avalable_hulls
+        }
+    }).collect();
+
+    assignments
 }
 
 #[cfg(test)]
