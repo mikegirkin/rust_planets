@@ -1,8 +1,8 @@
 use std::fs::read;
-use encoding_rs::KOI8_R;
-use std::mem::transmute;
 use std::mem;
 use std::convert::TryInto;
+
+use super::util::*;
 
 #[derive(Debug)]
 pub struct RaceName {
@@ -92,30 +92,6 @@ const NUMBER_OF_WARPS: usize = 9;
 const NUMBER_OF_TLAUNCHERS: usize = 10;
 const NUMBER_OF_HULLS: usize = 105;
 
-fn read_int16(slice: [u8; 2]) -> i16 {
-    return i16::from_le_bytes(slice);
-}
-
-fn read_usize_word(slice: [u8; 2]) -> usize {
-    return usize::from(
-        u16::from_le_bytes(slice)
-    );
-}
-
-fn read_koi8r_str(slice: &[u8]) -> String {
-    let (cow_str, _, _) = KOI8_R.decode(slice);
-    cow_str.as_ref().trim_matches(|c: char| c.is_whitespace() || c == '\u{0}').to_owned()
-}
-
-fn read_int32(slice: [u8; 4]) -> i32 {
-    return i32::from_le_bytes(slice);
-}
-
-fn read_record<T>(byte_slice: &[u8], record_size: usize, record_number: usize, reader: impl Fn(&[u8]) -> T) -> T {
-    let record = &byte_slice[record_number*record_size..(record_number+1)*record_size];
-    reader(record)
-}
-
 pub fn read_race_nm(path: &str) -> Vec<RaceName> {
     let content = read(path).unwrap();
 
@@ -166,8 +142,8 @@ pub fn read_xyplan_dat(path: &str) -> Vec<Coords> {
     let coords = (0..NUMBER_OF_PLANETS).map(|idx| {
         read_record(&content, RECORD_SIZE, idx, |slice| {
             Coords {
-                x: read_int16(slice[0..2].try_into().unwrap()),
-                y: read_int16(slice[2..4].try_into().unwrap())
+                x: read_i16(&slice[0..]),
+                y: read_i16(&slice[2..])
             }
         })
     }).collect();
@@ -183,14 +159,14 @@ pub fn read_beamspec_dat(path: &str) -> Vec<Beamspec> {
         read_record(&content, RECORD_SIZE, idx, |slice| {
             Beamspec {
                 name: read_koi8r_str(&slice[0..20]),
-                mc: read_int16(slice[20..22].try_into().unwrap()),
-                tri: read_int16(slice[22..24].try_into().unwrap()),
-                dur: read_int16(slice[24..26].try_into().unwrap()),
-                mol: read_int16(slice[26..28].try_into().unwrap()),
-                mass: read_int16(slice[28..30].try_into().unwrap()),
-                tech: read_int16(slice[30..32].try_into().unwrap()),
-                kill: read_int16(slice[32..34].try_into().unwrap()),
-                damage: read_int16(slice[34..36].try_into().unwrap()),
+                mc: read_i16(&slice[20..]),
+                tri: read_i16(&slice[22..]),
+                dur: read_i16(&slice[24..]),
+                mol: read_i16(&slice[26..]),
+                mass: read_i16(&slice[28..]),
+                tech: read_i16(&slice[30..]),
+                kill: read_i16(&slice[32..]),
+                damage: read_i16(&slice[34..]),
             }
         })
     }).collect();
@@ -206,14 +182,14 @@ pub fn read_engspec_dat(path: &str) -> Vec<Engspec> {
         read_record(&content, RECORD_SIZE, idx, |slice| {
             Engspec {
                 name: read_koi8r_str(&slice[0..20]),
-                mc: read_int16(slice[20..22].try_into().unwrap()),
-                tri: read_int16(slice[22..24].try_into().unwrap()),
-                dur: read_int16(slice[24..26].try_into().unwrap()),
-                mol: read_int16(slice[26..28].try_into().unwrap()),
-                tech: read_int16(slice[28..30].try_into().unwrap()),
+                mc: read_i16(&slice[20..]),
+                tri: read_i16(&slice[22..]),
+                dur: read_i16(&slice[24..]),
+                mol: read_i16(&slice[26..]),
+                tech: read_i16(&slice[28..]),
                 fuel_consumption: (0..NUMBER_OF_WARPS).map(|x| {
                     let start_index = 30 + x * mem::size_of::<i32>();
-                    read_int32(slice[start_index..start_index + mem::size_of::<i32>()].try_into().unwrap())
+                    read_i32(&slice[start_index..])
                 }).collect()
             }
         })
@@ -230,15 +206,15 @@ pub fn read_torpspec_dat(path: &str) -> Vec<Torpspec> {
         read_record(&content, RECORD_SIZE, idx, |slice| {
             Torpspec {
                 name: read_koi8r_str(&slice[0..20]),
-                torp_cost_mc: read_int16(slice[20..22].try_into().unwrap()),
-                mc: read_int16(slice[22..24].try_into().unwrap()),
-                tri: read_int16(slice[24..26].try_into().unwrap()),
-                dur: read_int16(slice[26..28].try_into().unwrap()),
-                mol: read_int16(slice[28..30].try_into().unwrap()),
-                mass: read_int16(slice[30..32].try_into().unwrap()),
-                tech: read_int16(slice[32..34].try_into().unwrap()),
-                kill: read_int16(slice[34..36].try_into().unwrap()),
-                damage: read_int16(slice[36..38].try_into().unwrap()),
+                torp_cost_mc: read_i16(&slice[20..]),
+                mc: read_i16(&slice[22..]),
+                tri: read_i16(&slice[24..]),
+                dur: read_i16(&slice[26..]),
+                mol: read_i16(&slice[28..]),
+                mass: read_i16(&slice[30..]),
+                tech: read_i16(&slice[32..]),
+                kill: read_i16(&slice[34..]),
+                damage: read_i16(&slice[36..]),
             }
         })
     }).collect();
@@ -254,20 +230,20 @@ pub fn read_hullspec_dat(path: &str) -> Vec<Hullspec> {
         read_record(&content, RECORD_SIZE, idx, |slice| {
             Hullspec {
                 name: read_koi8r_str(&slice[0..30]),
-                pic_number: read_int16(slice[30..32].try_into().unwrap()),
-                tri: read_int16(slice[34..36].try_into().unwrap()),
-                dur: read_int16(slice[36..38].try_into().unwrap()),
-                mol: read_int16(slice[38..40].try_into().unwrap()),
-                max_fuel: read_int16(slice[40..42].try_into().unwrap()),
-                max_crew: read_int16(slice[42..44].try_into().unwrap()),
-                engines_number: read_int16(slice[44..46].try_into().unwrap()),
-                mass: read_int16(slice[46..48].try_into().unwrap()),
-                tech: read_int16(slice[48..50].try_into().unwrap()),
-                cargo: read_int16(slice[50..52].try_into().unwrap()),
-                fighter_bays: read_int16(slice[52..54].try_into().unwrap()),
-                max_launchers: read_int16(slice[54..56].try_into().unwrap()),
-                max_beams: read_int16(slice[56..58].try_into().unwrap()),
-                mc: read_int16(slice[58..60].try_into().unwrap()),
+                pic_number: read_i16(&slice[30..]),
+                tri: read_i16(&slice[34..]),
+                dur: read_i16(&slice[36..]),
+                mol: read_i16(&slice[38..]),
+                max_fuel: read_i16(&slice[40..]),
+                max_crew: read_i16(&slice[42..]),
+                engines_number: read_i16(&slice[44..]),
+                mass: read_i16(&slice[46..]),
+                tech: read_i16(&slice[48..]),
+                cargo: read_i16(&slice[50..]),
+                fighter_bays: read_i16(&slice[52..]),
+                max_launchers: read_i16(&slice[54..]),
+                max_beams: read_i16(&slice[56..]),
+                mc: read_i16(&slice[58..]),
             }
         })
     }).collect();
@@ -282,7 +258,7 @@ pub fn read_truehull_dat(path: &str) -> Vec<HullAssignment> {
     let assignments = (0..NUMBER_OR_RACES).map(|idx| {
         read_record(&content, RECORD_SIZE, idx, |slice| {
             let avalable_hulls = (0..20).map(|x| {
-                read_usize_word(slice[x * 2..(x + 1) * 2].try_into().unwrap())
+                read_usize_word(&slice[x * 2..])
             }).filter(|number| *number != 0)
                 .map(|number| number - 1)
                 .collect::<Vec<usize>>();
@@ -297,5 +273,5 @@ pub fn read_truehull_dat(path: &str) -> Vec<HullAssignment> {
 }
 
 #[cfg(test)]
-#[path = "./read_static_test.rs"]
-mod read_static_test;
+#[path = "./test_read_static.rs"]
+mod test_read_static;

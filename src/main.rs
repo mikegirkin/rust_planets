@@ -1,4 +1,4 @@
-use crate::io::read_static::{read_xyplan_dat, Hullspec};
+use crate::io::read_static::*;
 
 mod io;
 
@@ -6,21 +6,21 @@ fn main() {
 
     let test_path = "/Users/mgirkin/proj/rust/rust_planets/test_files/pleiades10/".to_string();
 
-    let race_names = io::read_static::read_race_nm(&format!("{}{}", test_path, "race.nm"));
+    let race_names = read_race_nm(&format!("{}{}", test_path, "race.nm"));
 
-    let planet_names = io::read_static::read_planet_nm(&format!("{}{}", test_path, "planet.nm"));
+    let planet_names = read_planet_nm(&format!("{}{}", test_path, "planet.nm"));
 
-    let planet_coords = io::read_static::read_xyplan_dat(&format!("{}{}", test_path, "xyplan.dat"));
+    let planet_coords = read_xyplan_dat(&format!("{}{}", test_path, "xyplan.dat"));
 
-    let beam_specs = io::read_static::read_beamspec_dat(&format!("{}{}", test_path, "beamspec.dat"));
+    let beam_specs = read_beamspec_dat(&format!("{}{}", test_path, "beamspec.dat"));
 
-    let engine_specs = io::read_static::read_engspec_dat(&format!("{}{}", test_path, "engspec.dat"));
+    let engine_specs = read_engspec_dat(&format!("{}{}", test_path, "engspec.dat"));
 
-    let torp_specs = io::read_static::read_torpspec_dat(&format!("{}{}", test_path, "torpspec.dat"));
+    let torp_specs = read_torpspec_dat(&format!("{}{}", test_path, "torpspec.dat"));
 
-    let hull_specs = io::read_static::read_hullspec_dat(&format!("{}{}", test_path, "hullspec.dat"));
+    let hull_specs = read_hullspec_dat(&format!("{}{}", test_path, "hullspec.dat"));
 
-    let truehull_raw = io::read_static::read_truehull_dat(&format!("{}{}", test_path, "truehull.dat"));
+    let truehull_raw = read_truehull_dat(&format!("{}{}", test_path, "truehull.dat"));
 
     let hulls_races: Vec<Vec<&Hullspec>> = truehull_raw.iter().map(|assignment| {
         assignment.available_hulls.iter().map(|hull_idx| {
