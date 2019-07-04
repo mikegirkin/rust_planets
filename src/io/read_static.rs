@@ -60,12 +60,32 @@ pub struct Torpspec {
     damage: i16
 }
 
+#[derive(Debug)]
+pub struct Hullspec {
+    name: String,
+    pic_number: i16,
+    tri: i16,
+    dur: i16,
+    mol: i16,
+    max_fuel: i16,
+    max_crew: i16,
+    engines_number: i16,
+    mass: i16,
+    tech: i16,
+    cargo: i16,
+    fighter_bays: i16,
+    max_launchers: i16,
+    max_beams: i16,
+    mc: i16
+}
+
 const NUMBER_OR_RACES: usize = 11;
 const NUMBER_OF_PLANETS: usize = 500;
 const NUMBER_OF_BEAMS: usize = 10;
 const NUMBER_OF_ENGINES: usize = 9;
 const NUMBER_OF_WARPS: usize = 9;
 const NUMBER_OF_TLAUNCHERS: usize = 10;
+const NUMBER_OF_HULLS: usize = 105;
 
 fn read_int16(slice: [u8; 2]) -> i16 {
     return i16::from_le_bytes(slice);
@@ -208,6 +228,33 @@ pub fn read_torpspec_dat(path: &str) -> Vec<Torpspec> {
     specs
 }
 
+pub fn read_hullspec_dat(path: &str) -> Vec<Hullspec> {
+    let content = read(path).unwrap();
+    const RECORD_SIZE: usize = 60;
+
+    let specs = (0..NUMBER_OF_HULLS).map(|idx| {
+        let record = &content[idx*RECORD_SIZE..(idx+1)*RECORD_SIZE];
+        Hullspec {
+            name: read_koi8r_str(&record[0..30]),
+            pic_number: read_int16(record[30..32].try_into().unwrap()),
+            tri: read_int16(record[34..36].try_into().unwrap()),
+            dur: read_int16(record[36..38].try_into().unwrap()),
+            mol: read_int16(record[38..40].try_into().unwrap()),
+            max_fuel: read_int16(record[40..42].try_into().unwrap()),
+            max_crew: read_int16(record[42..44].try_into().unwrap()),
+            engines_number: read_int16(record[44..46].try_into().unwrap()),
+            mass: read_int16(record[46..48].try_into().unwrap()),
+            tech: read_int16(record[48..50].try_into().unwrap()),
+            cargo: read_int16(record[50..52].try_into().unwrap()),
+            fighter_bays: read_int16(record[52..54].try_into().unwrap()),
+            max_launchers: read_int16(record[54..56].try_into().unwrap()),
+            max_beams: read_int16(record[56..58].try_into().unwrap()),
+            mc: read_int16(record[58..60].try_into().unwrap()),
+        }
+    }).collect();
+
+    specs
+}
 
 #[cfg(test)]
 #[path = "./read_static_test.rs"]

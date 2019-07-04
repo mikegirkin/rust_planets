@@ -73,3 +73,15 @@ fn test_read_toprspec_dat() {
     assert_eq!(torpspec[9].name, "Selphyr-Fataro-Dev.");
     assert_eq!(torpspec[9].damage, 99);
 }
+
+#[test]
+fn test_read_hullspec_dat() {
+    let path = path_in_test_directory("pleiades10/hullspec.dat");
+    let hullspec = read_hullspec_dat(&path);
+
+    assert_eq!(hullspec[0].name, "DAEDALUS CLASS SCOUT");
+    assert_eq!(hullspec[0].mc, 100);
+
+    assert_eq!(hullspec[NUMBER_OF_HULLS-1].name, "MERLIN CLASS ALCHEMY SHIP");
+    assert_eq!(hullspec[NUMBER_OF_HULLS-1].mc, 2310);
+}
