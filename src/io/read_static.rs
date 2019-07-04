@@ -111,6 +111,11 @@ fn read_int32(slice: [u8; 4]) -> i32 {
     return i32::from_le_bytes(slice);
 }
 
+fn read_record<T>(byte_slice: &[u8], record_size: usize, record_number: usize, reader: impl Fn(&[u8]) -> T) -> T {
+    let record = &byte_slice[record_number*record_size..(record_number+1)*record_size];
+    reader(record)
+}
+
 pub fn read_race_nm(path: &str) -> Vec<RaceName> {
     let content = read(path).unwrap();
 
@@ -159,13 +164,12 @@ pub fn read_xyplan_dat(path: &str) -> Vec<Coords> {
     const RECORD_SIZE: usize = 6;
 
     let coords = (0..NUMBER_OF_PLANETS).map(|idx| {
-        let record = &content[idx*RECORD_SIZE..(idx+1)*RECORD_SIZE];
-        let x = read_int16(record[0..2].try_into().unwrap());
-        let y = read_int16(record[2..4].try_into().unwrap());
-        Coords{
-            x: x,
-            y: y
-        }
+        read_record(&content, RECORD_SIZE, idx, |slice| {
+            Coords {
+                x: read_int16(slice[0..2].try_into().unwrap()),
+                y: read_int16(slice[2..4].try_into().unwrap())
+            }
+        })
     }).collect();
 
     coords
@@ -176,18 +180,19 @@ pub fn read_beamspec_dat(path: &str) -> Vec<Beamspec> {
     const RECORD_SIZE: usize = 36;
 
     let specs = (0..NUMBER_OF_BEAMS).map(|idx| {
-        let record = &content[idx*RECORD_SIZE..(idx+1)*RECORD_SIZE];
-        Beamspec {
-            name: read_koi8r_str(&record[0..20]),
-            mc: read_int16(record[20..22].try_into().unwrap()),
-            tri: read_int16(record[22..24].try_into().unwrap()),
-            dur: read_int16(record[24..26].try_into().unwrap()),
-            mol: read_int16(record[26..28].try_into().unwrap()),
-            mass: read_int16(record[28..30].try_into().unwrap()),
-            tech: read_int16(record[30..32].try_into().unwrap()),
-            kill: read_int16(record[32..34].try_into().unwrap()),
-            damage: read_int16(record[34..36].try_into().unwrap()),
-        }
+        read_record(&content, RECORD_SIZE, idx, |slice| {
+            Beamspec {
+                name: read_koi8r_str(&slice[0..20]),
+                mc: read_int16(slice[20..22].try_into().unwrap()),
+                tri: read_int16(slice[22..24].try_into().unwrap()),
+                dur: read_int16(slice[24..26].try_into().unwrap()),
+                mol: read_int16(slice[26..28].try_into().unwrap()),
+                mass: read_int16(slice[28..30].try_into().unwrap()),
+                tech: read_int16(slice[30..32].try_into().unwrap()),
+                kill: read_int16(slice[32..34].try_into().unwrap()),
+                damage: read_int16(slice[34..36].try_into().unwrap()),
+            }
+        })
     }).collect();
 
     specs
@@ -198,19 +203,20 @@ pub fn read_engspec_dat(path: &str) -> Vec<Engspec> {
     const RECORD_SIZE: usize = 66;
 
     let specs = (0..NUMBER_OF_ENGINES).map(|idx| {
-        let record = &content[idx*RECORD_SIZE..(idx+1)*RECORD_SIZE];
-        Engspec {
-            name: read_koi8r_str(&record[0..20]),
-            mc: read_int16(record[20..22].try_into().unwrap()),
-            tri: read_int16(record[22..24].try_into().unwrap()),
-            dur: read_int16(record[24..26].try_into().unwrap()),
-            mol: read_int16(record[26..28].try_into().unwrap()),
-            tech: read_int16(record[28..30].try_into().unwrap()),
-            fuel_consumption: (0..NUMBER_OF_WARPS).map(|x| {
-                let start_index = 30 + x*mem::size_of::<i32>();
-                read_int32(record[start_index..start_index + mem::size_of::<i32>()].try_into().unwrap())
-            }).collect()
-        }
+        read_record(&content, RECORD_SIZE, idx, |slice| {
+            Engspec {
+                name: read_koi8r_str(&slice[0..20]),
+                mc: read_int16(slice[20..22].try_into().unwrap()),
+                tri: read_int16(slice[22..24].try_into().unwrap()),
+                dur: read_int16(slice[24..26].try_into().unwrap()),
+                mol: read_int16(slice[26..28].try_into().unwrap()),
+                tech: read_int16(slice[28..30].try_into().unwrap()),
+                fuel_consumption: (0..NUMBER_OF_WARPS).map(|x| {
+                    let start_index = 30 + x * mem::size_of::<i32>();
+                    read_int32(slice[start_index..start_index + mem::size_of::<i32>()].try_into().unwrap())
+                }).collect()
+            }
+        })
     }).collect();
 
     specs
@@ -221,19 +227,20 @@ pub fn read_torpspec_dat(path: &str) -> Vec<Torpspec> {
     const RECORD_SIZE: usize = 38;
 
     let specs = (0..NUMBER_OF_TLAUNCHERS).map(|idx| {
-        let record = &content[idx*RECORD_SIZE..(idx+1)*RECORD_SIZE];
-        Torpspec {
-            name: read_koi8r_str(&record[0..20]),
-            torp_cost_mc: read_int16(record[20..22].try_into().unwrap()),
-            mc: read_int16(record[22..24].try_into().unwrap()),
-            tri: read_int16(record[24..26].try_into().unwrap()),
-            dur: read_int16(record[26..28].try_into().unwrap()),
-            mol: read_int16(record[28..30].try_into().unwrap()),
-            mass: read_int16(record[30..32].try_into().unwrap()),
-            tech: read_int16(record[32..34].try_into().unwrap()),
-            kill: read_int16(record[34..36].try_into().unwrap()),
-            damage: read_int16(record[36..38].try_into().unwrap()),
-        }
+        read_record(&content, RECORD_SIZE, idx, |slice| {
+            Torpspec {
+                name: read_koi8r_str(&slice[0..20]),
+                torp_cost_mc: read_int16(slice[20..22].try_into().unwrap()),
+                mc: read_int16(slice[22..24].try_into().unwrap()),
+                tri: read_int16(slice[24..26].try_into().unwrap()),
+                dur: read_int16(slice[26..28].try_into().unwrap()),
+                mol: read_int16(slice[28..30].try_into().unwrap()),
+                mass: read_int16(slice[30..32].try_into().unwrap()),
+                tech: read_int16(slice[32..34].try_into().unwrap()),
+                kill: read_int16(slice[34..36].try_into().unwrap()),
+                damage: read_int16(slice[36..38].try_into().unwrap()),
+            }
+        })
     }).collect();
 
     specs
@@ -244,24 +251,25 @@ pub fn read_hullspec_dat(path: &str) -> Vec<Hullspec> {
     const RECORD_SIZE: usize = 60;
 
     let specs = (0..NUMBER_OF_HULLS).map(|idx| {
-        let record = &content[idx*RECORD_SIZE..(idx+1)*RECORD_SIZE];
-        Hullspec {
-            name: read_koi8r_str(&record[0..30]),
-            pic_number: read_int16(record[30..32].try_into().unwrap()),
-            tri: read_int16(record[34..36].try_into().unwrap()),
-            dur: read_int16(record[36..38].try_into().unwrap()),
-            mol: read_int16(record[38..40].try_into().unwrap()),
-            max_fuel: read_int16(record[40..42].try_into().unwrap()),
-            max_crew: read_int16(record[42..44].try_into().unwrap()),
-            engines_number: read_int16(record[44..46].try_into().unwrap()),
-            mass: read_int16(record[46..48].try_into().unwrap()),
-            tech: read_int16(record[48..50].try_into().unwrap()),
-            cargo: read_int16(record[50..52].try_into().unwrap()),
-            fighter_bays: read_int16(record[52..54].try_into().unwrap()),
-            max_launchers: read_int16(record[54..56].try_into().unwrap()),
-            max_beams: read_int16(record[56..58].try_into().unwrap()),
-            mc: read_int16(record[58..60].try_into().unwrap()),
-        }
+        read_record(&content, RECORD_SIZE, idx, |slice| {
+            Hullspec {
+                name: read_koi8r_str(&slice[0..30]),
+                pic_number: read_int16(slice[30..32].try_into().unwrap()),
+                tri: read_int16(slice[34..36].try_into().unwrap()),
+                dur: read_int16(slice[36..38].try_into().unwrap()),
+                mol: read_int16(slice[38..40].try_into().unwrap()),
+                max_fuel: read_int16(slice[40..42].try_into().unwrap()),
+                max_crew: read_int16(slice[42..44].try_into().unwrap()),
+                engines_number: read_int16(slice[44..46].try_into().unwrap()),
+                mass: read_int16(slice[46..48].try_into().unwrap()),
+                tech: read_int16(slice[48..50].try_into().unwrap()),
+                cargo: read_int16(slice[50..52].try_into().unwrap()),
+                fighter_bays: read_int16(slice[52..54].try_into().unwrap()),
+                max_launchers: read_int16(slice[54..56].try_into().unwrap()),
+                max_beams: read_int16(slice[56..58].try_into().unwrap()),
+                mc: read_int16(slice[58..60].try_into().unwrap()),
+            }
+        })
     }).collect();
 
     specs
@@ -272,17 +280,17 @@ pub fn read_truehull_dat(path: &str) -> Vec<HullAssignment> {
     const RECORD_SIZE: usize = 40;
 
     let assignments = (0..NUMBER_OR_RACES).map(|idx| {
-        let record = &content[idx*RECORD_SIZE..(idx+1)*RECORD_SIZE];
+        read_record(&content, RECORD_SIZE, idx, |slice| {
+            let avalable_hulls = (0..20).map(|x| {
+                read_usize_word(slice[x * 2..(x + 1) * 2].try_into().unwrap())
+            }).filter(|number| *number != 0)
+                .map(|number| number - 1)
+                .collect::<Vec<usize>>();
 
-        let avalable_hulls = (0..20).map(|x| {
-            read_usize_word(record[x*2..(x+1)*2].try_into().unwrap())
-        }).filter(|number| *number != 0)
-            .map(|number| number - 1)
-            .collect::<Vec<usize>>();
-
-        HullAssignment {
-            available_hulls: avalable_hulls
-        }
+            HullAssignment {
+                available_hulls: avalable_hulls
+            }
+        })
     }).collect();
 
     assignments
