@@ -1,6 +1,6 @@
 use std::fs::read;
-use crate::io::util::{read_usize_word, read_i16, read_record, read_koi8r_str, read_i32};
-use std::convert::TryInto;
+use crate::io::util::{read_usize_word, read_i16, read_record, read_koi8r_str, read_i32, read_array};
+use crate::io::model::{Coords, read_coords};
 
 #[derive(Debug)]
 pub struct FCode(String);
@@ -39,10 +39,8 @@ pub struct RstShipData {
     pub player_id: i16,
     pub fcode: FCode,
     pub warp: i16,
-    pub x_waypoint_distance: i16,
-    pub y_waypoint_distance: i16,
-    pub x_position: i16,
-    pub y_position: i16,
+    pub waypoint_distance: Coords,
+    pub position: Coords,
     pub engine_id: i16,
     pub hull_id: i16,
     pub beam_id: i16,
@@ -58,10 +56,7 @@ pub struct RstShipData {
     pub crew: i16,
     pub clans: i16,
     pub name: String,
-    pub neu: i16,
-    pub tri: i16,
-    pub dur: i16,
-    pub mol: i16,
+    pub minerals: Minerals,
     pub supplies: i16,
     pub unload_to_planet: TransferOrder,
     pub transfer_to_ship: TransferOrder,
@@ -101,7 +96,29 @@ pub struct RstPlanetData {
 
 #[derive(Debug)]
 pub struct RstBaseData {
-
+    pub base_id: i16,
+    pub player_id: i16,
+    pub defence: i16,
+    pub damage: i16,
+    pub engine_tech: i16,
+    pub hulls_tech: i16,
+    pub beam_tech: i16,
+    pub torpedo_tech: i16,
+    pub engines_stored: Vec<i16>,
+    pub hulls_stored: Vec<i16>,
+    pub beams_stored: Vec<i16>,
+    pub launchers_stored: Vec<i16>,
+    pub torps_stored: Vec<i16>,
+    pub fighters: i16,
+    pub fix_recycle_id: i16,
+    pub fix_recycle_action: i16,
+    pub mission: i16,
+    pub build_ship_hull: i16,
+    pub build_ship_engine: i16,
+    pub build_ship_beam_type: i16,
+    pub build_ship_beam_count: i16,
+    pub build_ship_launcher_type: i16,
+    pub build_ship_launcher_count: i16
 }
 
 #[derive(Debug)]
@@ -159,10 +176,8 @@ fn read_ships(rst_content: &[u8], pointer: usize) -> Vec<RstShipData> {
                 player_id: read_i16(slice, 2),
                 fcode: FCode(read_koi8r_str(&slice, 4, 3)),
                 warp: read_i16(slice, 7),
-                x_waypoint_distance: read_i16(slice, 9),
-                y_waypoint_distance: read_i16(slice, 11),
-                x_position: read_i16(slice, 13),
-                y_position: read_i16(slice, 15),
+                waypoint_distance: read_coords(slice, 9),
+                position: read_coords(slice, 13),
                 engine_id: read_i16(slice, 17),
                 hull_id: read_i16(slice, 19),
                 beam_id: read_i16(slice, 21),
@@ -178,10 +193,7 @@ fn read_ships(rst_content: &[u8], pointer: usize) -> Vec<RstShipData> {
                 crew: read_i16(slice, 41),
                 clans: read_i16(slice, 43),
                 name: read_koi8r_str(slice, 45, 20),
-                neu: read_i16(slice, 65),
-                tri: read_i16(slice, 67),
-                dur: read_i16(slice, 69),
-                mol: read_i16(slice, 71),
+                minerals: read_minerals_i16(slice, 65),
                 supplies: read_i16(slice, 73),
                 unload_to_planet: read_transfer_order(slice, 75),
                 transfer_to_ship: read_transfer_order(slice, 89),
@@ -225,7 +237,6 @@ fn read_minerals_i32(content: &[u8], start_from: usize) -> Minerals {
     }
 }
 
-
 fn read_visual_contacts(rst_file: &[u8], start_from: usize) -> Vec<RstVisualContactsData> {
     Vec::new()
 }
@@ -265,7 +276,39 @@ fn read_planets(rst_file: &[u8], start_from: usize) -> Vec<RstPlanetData> {
 }
 
 fn read_bases(rst_file: &[u8], start_from: usize) -> Vec<RstBaseData> {
-    Vec::new()
+    const RECORD_SIZE: usize = 156;
+    let bases_section = &rst_file[start_from..];
+    let number_of_records = read_usize_word(bases_section, 0);
+
+    (0..number_of_records).map(|idx| {
+        read_record(&bases_section[2..], RECORD_SIZE, idx, |slice| {
+            RstBaseData {
+                base_id: read_i16(slice, 0),
+                player_id: read_i16(slice, 2),
+                defence: read_i16(slice, 4),
+                damage: read_i16(slice, 6),
+                engine_tech: read_i16(slice, 8),
+                hulls_tech: read_i16(slice, 10),
+                beam_tech: read_i16(slice, 12),
+                torpedo_tech: read_i16(slice, 14),
+                engines_stored: read_array(slice, 16, 9),
+                hulls_stored: read_array(slice, 34, 20),
+                beams_stored: read_array(slice, 74, 10),
+                launchers_stored: read_array(slice, 94, 10),
+                torps_stored: read_array(slice, 114, 10),
+                fighters: read_i16(slice, 134),
+                fix_recycle_id: read_i16(slice, 136),
+                fix_recycle_action: read_i16(slice, 138),
+                mission: read_i16(slice, 140),
+                build_ship_hull: read_i16(slice, 142),
+                build_ship_engine: read_i16(slice, 144),
+                build_ship_beam_type: read_i16(slice, 146),
+                build_ship_beam_count: read_i16(slice, 148),
+                build_ship_launcher_type: read_i16(slice, 150),
+                build_ship_launcher_count: read_i16(slice, 152)
+            }
+        })
+    }).collect()
 }
 
 fn read_messages(rst_file: &[u8], start_from: usize) -> Vec<RstMessage> {

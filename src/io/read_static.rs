@@ -1,8 +1,9 @@
 use std::fs::read;
 use std::mem;
-use std::convert::TryInto;
 
-use super::util::*;
+use super::util::read_koi8r_str;
+use super::model::Coords;
+use crate::io::util::{read_i16, read_record, read_i32, read_usize_word};
 
 #[derive(Debug)]
 pub struct RaceName {
@@ -14,12 +15,6 @@ pub struct RaceName {
 #[derive(Debug)]
 pub struct PlanetName {
     text: String
-}
-
-#[derive(Debug, PartialEq)]
-pub struct Coords {
-    x: i16,
-    y: i16
 }
 
 #[derive(Debug)]
