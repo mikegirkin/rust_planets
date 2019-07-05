@@ -1,4 +1,5 @@
 use crate::io::read_static::*;
+use crate::io::read_rst::read_rst;
 
 mod io;
 
@@ -28,6 +29,8 @@ fn main() {
         }).collect()
     }).collect();
 
+    let rst = read_rst(&format!("{}{}", test_path, "001/player2.rst"));
+
     println!("race.nm: {:?}", race_names);
     println!("planet.nm: {:?}", planet_names);
     println!("xyplan.dat: {:?}", planet_coords);
@@ -36,4 +39,7 @@ fn main() {
     println!("torpspec.dat: {:?}", torp_specs);
     println!("hullspec.dat: {:?}", hull_specs);
     println!("Liz ships: {:?}", hulls_races[1]);
+
+    println!("RST ships: {:?}", rst.ships);
+    println!("RSP planets: {:?}", rst.planets);
 }
