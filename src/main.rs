@@ -41,5 +41,6 @@ fn main() {
     println!("Liz ships: {:?}", hulls_races[1]);
 
     println!("RST ships: {:?}", rst.ships);
-    println!("RSP planets: {:?}", rst.planets);
+    println!("RST planets: {:?}", rst.planets);
+    println!("RST bases: {:?}", rst.bases);
 }

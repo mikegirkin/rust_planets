@@ -1,6 +1,7 @@
 use encoding_rs::KOI8_R;
 use std::convert::TryInto;
 use std::path::PathBuf;
+use std::mem::size_of;
 
 pub trait ReadFromByteArray<T> {
     fn read_from(arr: &[u8]) -> T;
@@ -37,7 +38,7 @@ pub fn read_koi8r_str(slice: &[u8], start_from: usize, length: usize) -> String 
 
 pub fn read_array<T: ReadFromByteArray<T>>(slice: &[u8], start_from: usize, length: usize) -> Vec<T> {
     (0..length).map(|idx|{
-        T::read_from(&slice[start_from..])
+        T::read_from(&slice[(start_from + size_of::<T>() * idx) .. (start_from + size_of::<T>() * (idx + 1))])
     }).collect()
 }
 
