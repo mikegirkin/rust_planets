@@ -1,10 +1,13 @@
+mod io;
+mod gui;
+
 use crate::io::read_static::*;
 use crate::io::read_rst::read_rst;
+use crate::gui::gui_main;
 
-mod io;
+use std::env;
 
-fn main() {
-
+fn console_main() {
     let test_path = "/Users/mgirkin/proj/rust/rust_planets/test_files/pleiades10/".to_string();
 
     let race_names = read_race_nm(&format!("{}{}", test_path, "race.nm"));
@@ -43,4 +46,18 @@ fn main() {
     println!("RST ships: {:?}", rst.ships);
     println!("RST planets: {:?}", rst.planets);
     println!("RST bases: {:?}", rst.bases);
+}
+
+fn main() {
+
+    let args: Vec<String> = env::args().collect();
+    let default = String::from("console");
+    let query = args.get(1).unwrap_or(&default);
+
+    if query == "gui" {
+        gui_main();
+    } else {
+        console_main();
+    }
+
 }
