@@ -1,3 +1,5 @@
+mod util;
+mod model;
 mod io;
 mod gui;
 
@@ -6,15 +8,16 @@ use crate::io::read_rst::read_rst;
 use crate::gui::gui_main;
 
 use std::env;
+use std::path::Path;
 
 fn console_main() {
     let test_path = "/Users/mgirkin/proj/rust/rust_planets/test_files/pleiades10/".to_string();
 
     let race_names = read_race_nm(&format!("{}{}", test_path, "race.nm"));
 
-    let planet_names = read_planet_nm(&format!("{}{}", test_path, "planet.nm"));
+    let planet_names = read_planet_nm(format!("{}{}", test_path, "planet.nm"));
 
-    let planet_coords = read_xyplan_dat(&format!("{}{}", test_path, "xyplan.dat"));
+    let planet_coords = read_xyplan_dat(format!("{}{}", test_path, "xyplan.dat"));
 
     let beam_specs = read_beamspec_dat(&format!("{}{}", test_path, "beamspec.dat"));
 

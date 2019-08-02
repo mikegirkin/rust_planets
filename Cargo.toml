@@ -15,5 +15,8 @@ features = ["v3_16"]
 version = ""
 features = ["v2_44"]
 
+[dependencies.gdk]
+
 [dependencies.cairo-rs]
 version = "0.7.1"
+

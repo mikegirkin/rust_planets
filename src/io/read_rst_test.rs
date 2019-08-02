@@ -1,5 +1,5 @@
 use super::*;
-use super::super::util::*;
+use crate::util::*;
 
 #[test]
 fn test_reading_ships() {

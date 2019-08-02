@@ -1,5 +1,5 @@
 use super::*;
-use super::super::util::path_in_test_directory;
+use crate::util::path_in_test_directory;
 
 #[test]
 fn test_read_race_nm() {
@@ -15,8 +15,8 @@ fn test_read_planet_nm() {
     let path = path_in_test_directory("pleiades10/planet.nm");
     let planet_names = read_planet_nm(&path);
 
-    assert_eq!(planet_names[0].text, "Ceti Alpha one");
-    assert_eq!(planet_names[499].text, "Fantasia");
+    assert_eq!(planet_names[0].0, "Ceti Alpha one");
+    assert_eq!(planet_names[499].0, "Fantasia");
 }
 
 #[test]

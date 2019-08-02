@@ -2,8 +2,9 @@ use std::fs::read;
 use std::mem;
 
 use super::util::read_koi8r_str;
-use super::model::Coords;
 use crate::io::util::{read_i16, read_record, read_i32, read_usize_word};
+use std::path::Path;
+use crate::model::game::Coords;
 
 #[derive(Debug)]
 pub struct RaceName {
@@ -12,10 +13,8 @@ pub struct RaceName {
     adjective: String
 }
 
-#[derive(Debug)]
-pub struct PlanetName {
-    text: String
-}
+#[derive(Debug, Clone)]
+pub struct PlanetName(pub String);
 
 #[derive(Debug)]
 pub struct Beamspec {
@@ -30,15 +29,15 @@ pub struct Beamspec {
     damage: i16
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Engspec {
-    name: String,
-    mc: i16,
-    tri: i16,
-    dur: i16,
-    mol: i16,
-    tech: i16,
-    fuel_consumption: Vec<i32>
+    pub name: String,
+    pub mc: i16,
+    pub tri: i16,
+    pub dur: i16,
+    pub mol: i16,
+    pub tech: i16,
+    pub fuel_consumption: Vec<i32>
 }
 
 #[derive(Debug)]
@@ -115,22 +114,20 @@ pub fn read_race_nm(path: &str) -> Vec<RaceName> {
     race_names
 }
 
-pub fn read_planet_nm(path: &str) -> Vec<PlanetName> {
+pub fn read_planet_nm<P: AsRef<Path>>(path: P) -> Vec<PlanetName> {
     let full_str = read(path).unwrap();
 
     const PLANET_NAME_LENGTH: usize = 20;
 
     let planet_names = (0..NUMBER_OF_PLANETS).map(|idx| {
        let name = read_koi8r_str(&full_str, idx*PLANET_NAME_LENGTH, PLANET_NAME_LENGTH);
-        PlanetName {
-            text: name
-        }
+        PlanetName(name)
     }).collect();
 
     planet_names
 }
 
-pub fn read_xyplan_dat(path: &str) -> Vec<Coords> {
+pub fn read_xyplan_dat<P: AsRef<Path>>(path: P) -> Vec<Coords> {
     let content = read(path).unwrap();
     const RECORD_SIZE: usize = 6;
 
@@ -169,7 +166,7 @@ pub fn read_beamspec_dat(path: &str) -> Vec<Beamspec> {
     specs
 }
 
-pub fn read_engspec_dat(path: &str) -> Vec<Engspec> {
+pub fn read_engspec_dat<P: AsRef<Path>>(path: P) -> Vec<Engspec> {
     let content = read(path).unwrap();
     const RECORD_SIZE: usize = 66;
 

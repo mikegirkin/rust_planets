@@ -1,11 +1,13 @@
 use std::fs::read;
 use crate::io::util::{read_usize_word, read_i16, read_record, read_koi8r_str, read_i32, read_array};
-use crate::io::model::{Coords, read_coords};
+use crate::io::model::read_coords;
+use crate::model::game::Coords;
+use std::path::Path;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FCode(String);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RawRstData {
     pub general_info: RstGeneralInfo,
     pub ships: Vec<RstShipData>,
@@ -17,7 +19,7 @@ pub struct RawRstData {
     pub vcrs: Vec<RstVcr>
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Minerals {
     pub neu: i32,
     pub tri: i32,
@@ -25,7 +27,7 @@ pub struct Minerals {
     pub mol: i32,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TransferOrder {
     pub minerals: Minerals,
     pub colonists: i16,
@@ -33,7 +35,7 @@ pub struct TransferOrder {
     pub target_id: i16
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RstShipData {
     pub id: i16,
     pub player_id: i16,
@@ -64,12 +66,12 @@ pub struct RstShipData {
     pub money: i16
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RstVisualContactsData {
 
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RstPlanetData {
     pub player_id: i16,
     pub planet_id: i16,
@@ -94,7 +96,7 @@ pub struct RstPlanetData {
     pub build_base: i16
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RstBaseData {
     pub base_id: i16,
     pub player_id: i16,
@@ -121,27 +123,27 @@ pub struct RstBaseData {
     pub build_ship_launcher_count: i16
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RstMessage {
 
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RstShipCoord {
 
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RstGeneralInfo {
 
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RstVcr {
 
 }
 
-pub fn read_rst(path: &str) -> RawRstData {
+pub fn read_rst<P: AsRef<Path>>(path: P) -> RawRstData {
     let content = read(path).unwrap();
     let ship_pointer = read_usize_word(&content, 0) - 1;
     let visual_contact_pointer = read_usize_word(&content, 4) - 1;
