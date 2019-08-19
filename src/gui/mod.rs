@@ -13,9 +13,10 @@ use std::env::args;
 use self::gtk::{CellRendererPixbufBuilder, Window, Image, Widget, Orientation, render_background};
 use crate::model::game::Game;
 use crate::util::path_in_test_directory;
-use std::borrow::{BorrowMut, Borrow};
+use std::rc::Rc;
+use std::cell::RefCell;
 
-fn map_draw(game: &Game, widget: &gtk::DrawingArea, cr: &cairo::Context) -> Inhibit {
+fn draw_map(game: &Game, widget: &gtk::DrawingArea, cr: &cairo::Context) -> Inhibit {
 //    let width = widget.get_allocated_width();
 //    let height = widget.get_allocated_height();
 
@@ -55,20 +56,16 @@ fn map_draw(game: &Game, widget: &gtk::DrawingArea, cr: &cairo::Context) -> Inhi
     Inhibit(false)
 }
 
-fn build_map_widget(game: &Game) -> gtk::DrawingArea {
-//    let draw:for<'r, 's> fn(&'r gtk::DrawingArea, &'s cairo::Context) -> Inhibit = |w, cr| {
-//        map_draw(game, w, cr)
-//    };
+fn build_map_widget(game: Rc<RefCell<Game>>) -> gtk::DrawingArea {
     let drawing_area = gtk::DrawingArea::new();
-    let inner_game = game.clone();
     drawing_area.connect_draw(move |w, cr| {
-        map_draw(&inner_game, w, cr)
+        draw_map(&game.borrow(), w, cr)
     });
     drawing_area.set_size_request(400, 400);
     drawing_area
 }
 
-fn build_ui(application: &gtk::Application, game: &Game) {
+fn build_ui(application: &gtk::Application, game: Rc<RefCell<Game>>) {
     let window = gtk::ApplicationWindow::new(application);
 
     window.set_title("First GTK+ Program");
@@ -93,10 +90,14 @@ pub fn gui_main() {
         gtk::Application::new(Some("com.github.gtk-rs.examples.basic"), Default::default())
             .expect("Initialization failed...");
 
-    let game = Game::read(path_in_test_directory("pleiades10"));
+    let game_directory = "pleiades10";
+
+    let game: Rc<RefCell<_>> = Rc::new(RefCell::new(
+        Game::read(path_in_test_directory(game_directory))
+    ));
 
     application.connect_activate(move |app| {
-        build_ui(app, &(game.clone()));
+        build_ui(app, game.clone());
     });
 
     application.run(&[]);
